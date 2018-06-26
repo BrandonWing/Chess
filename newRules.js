@@ -18,6 +18,7 @@ function setPieceFunctionality(piece) {
 let color = "white";
 let xAxis = ["A", "B", "C", "D", "E", "F", "G", "H"];
 let activeCells = [];
+let activePiece = "";
 
 //Framework of movement for all pieces excluding the knight
 function generalMove(maximumMovementsHash, piecePosition) {
@@ -28,23 +29,26 @@ function generalMove(maximumMovementsHash, piecePosition) {
     //Bishops cannot go horizontal
     if(maximumMovementsHash.vertHor == true){
         console.log('vert hori check');
-        adjustXandY(1, 0, maximumMovementsHash.maxUp); //Up
-        adjustXandY(-1, 0, maximumMovementsHash.maxDown); //Down
-        adjustXandY(0, 1, maximumMovementsHash.maxRight); //Right
-        adjustXandY(0, -1, maximumMovementsHash.maxLeft); //Left
+        adjustXandY(1, 0, maximumMovementsHash.maxRight); //Right
+        adjustXandY(-1, 0, maximumMovementsHash.maxLeft); //Left
+        adjustXandY(0, 1, maximumMovementsHash.maxUp); //Up
+        adjustXandY(0, -1, maximumMovementsHash.maxDown); //Down
     }
 
     //Rooks and pawns can't go diagnol on normal movements
     if(maximumMovementsHash.diagnol == true){
         console.log('diag check');
-        adjustXandY(1, 1, min(maximumMovementsHash.maxUp, maximumMovementsHash.maxRight)); //Diagnol Up Right
-        adjustXandY(1, -1, min(maximumMovementsHash.maxDown, maximumMovementsHash.maxRight)); //Diagnol Down Right
-        adjustXandY(-1, -1, min(maximumMovementsHash.maxDown, maximumMovementsHash.maxLeft));
-        adjustXandY(-1, 1, min(maximumMovementsHash.maxUp, maximumMovementsHash.maxLeft));
+        adjustXandY(1, 1, Math.min(maximumMovementsHash.maxUp, maximumMovementsHash.maxRight)); //Diagnol Up Right
+        adjustXandY(1, -1, Math.min(maximumMovementsHash.maxDown, maximumMovementsHash.maxRight)); //Diagnol Down Right
+        adjustXandY(-1, -1, Math.min(maximumMovementsHash.maxDown, maximumMovementsHash.maxLeft)); //Diagnol Down Left
+        adjustXandY(-1, 1, Math.min(maximumMovementsHash.maxUp, maximumMovementsHash.maxLeft)); //Diagnol Up Left
     }
     
     //Dynamically add cells to possible places to move
     function adjustXandY(amountForX, amountForY, maxMovement) {
+        console.log(amountForX);
+        console.log(amountForY);
+        console.log(maxMovement);
         xPosition = xPos;
         yPosition = yPos;
         for(let i = 0; i < maxMovement; i++){
@@ -61,7 +65,9 @@ function generalMove(maximumMovementsHash, piecePosition) {
             possibleCells.push(cellID);
 
         }
+        console.log(possibleCells);
     }
+    console.log(possibleCells);
     for(cellID of possibleCells) {
         setCell(cellID, piecePosition, "bg-success");
     }  
@@ -75,6 +81,9 @@ function showMoves(pieceType, piecePosition, pieceColor) {
     }
     console.log("Starting to show");
     unsetCells();
+    if(piecePosition == activePiece){
+        return;
+    }
     let xPos = xAxis.indexOf(piecePosition.charAt(0));
     let yPos = parseInt(piecePosition.charAt(1));
 
@@ -93,8 +102,8 @@ function showMoves(pieceType, piecePosition, pieceColor) {
     queenMovements = {maxUp:maximumUpwardMovement, maxRight:maximumRightMovement, 
                       maxDown:maximumDownwardMovement, maxLeft:maximumLeftMovement, diagnol:true, vertHor:true};
     //King Movements (all one or zero depending on position)---
-    kingMovements = {maxUp:() => min(1, maximumUpwardMovement), maxRight:() => min(1, maximumRightMovement), 
-                     maxDown:() => min(1, maximumDownwardMovement), maxLeft:() => min(1, maximumLeftMovement), diagnol:true, vertHor:true};
+    kingMovements = {maxUp:Math.min(1, maximumUpwardMovement), maxRight:Math.min(1, maximumRightMovement), 
+                     maxDown:Math.min(1, maximumDownwardMovement), maxLeft:Math.min(1, maximumLeftMovement), diagnol:true, vertHor:true};
     
     //Pawn movements------------------------
     let pawnMovements;
@@ -107,10 +116,10 @@ function showMoves(pieceType, piecePosition, pieceColor) {
     }
     else {
         let movement = (function() {switch(yPos) {
-            case 6: return 2; break;
+            case 7: return 2; break;
             default: return 1; break;
         }})();
-        pawnMovements = {maxUp:0, maxRight:0, maxDown:movment, maxLeft:0, diagnol:false, vertHor:true}
+        pawnMovements = {maxUp:0, maxRight:0, maxDown:movement, maxLeft:0, diagnol:false, vertHor:true}
     }
     
     console.log(pawnMovements);
@@ -141,7 +150,7 @@ function knightRules(piecePosition) {
             console.log(cellClasses);
             if (cellClasses.contains("whiteOccupied") || cellClasses.contains("blackOccupied")){
                 let upwardNeighbor = possibleCell;
-                checkCellPieceColor(cellID, piecePosition);
+                checkCellPieceColor(possibleCell, piecePosition);
                 console.log(`Piece in front at ${possibleCell}`);
                 continue;
             }
@@ -157,19 +166,21 @@ function knightRules(piecePosition) {
 //Set the cell specified to a color specified
 function setCell(cellID, originalPiecePosition, cellColor) {
     let cell = document.getElementById(cellID);
+    let originalCellColor = "";
     cell.setAttribute('onclick', `movePiece('${cellID}', '${originalPiecePosition}')`);
     if(cell.classList.contains("bg-dark")){
         console.log("dark cell");
-        let color="bg-dark";
+        originalCellColor="bg-dark";
         cell.classList.remove("bg-dark");
     }
     else{
         console.log("light cell");
-        let color="bg-light";
+        originalCellColor="bg-light";
         cell.classList.remove("bg-light");
     }
     cell.classList.add(cellColor);
-    activeCells.push([cellID, color])
+    activeCells.push([cellID, originalCellColor]);
+    console.log(activeCells);
 }
 
 //Move the selected piece to the selected square
@@ -178,14 +189,14 @@ function movePiece(newCellID, originalPiecePosition) {
 
     console.log("Possible");
     originalCell = document.getElementById(originalPiecePosition);
-    originPiece = originalCell.children[0].cloneNode(true);
-    console.log(piece);
+    originalPiece = originalCell.children[0].cloneNode(true);
+    console.log(originalPiece);
     originalCell.innerHTML = "";
 
     newCell = document.getElementById(newCellID);
     newCell.innerHTML = "";
-    newCell.append(piece);
-    setPieceFunctionality(piece);
+    newCell.append(originalPiece);
+    setPieceFunctionality(originalPiece);
     originalCell.classList.remove("whiteOccupied", "blackOccupied"); //Reset cell where piece moved from
     newCell.classList.remove("whiteOccupied", "blackOccupied");     //Reset cell where piece is moving to
     if(color == "white") {
@@ -196,7 +207,6 @@ function movePiece(newCellID, originalPiecePosition) {
         newCell.classList.add("blackOccupied");
         color = "white";
     }
-    
     unsetCells();
 }
 
@@ -215,9 +225,11 @@ function unsetCells(){
 
 //Check piece in path to see if player's piece or opponents
 function checkCellPieceColor(pieceToCheck, activePiece) {
+    console.log("checking piece");
     let cell = document.getElementById(pieceToCheck);
     piece = cell.children[0];
     if((piece.classList.contains("white") && color == "black") || (piece.classList.contains("black") && color =="white")){
+        console.log("setting to red");
         setCell(pieceToCheck, activePiece, "bg-danger");
     }
     console.log(piece);
