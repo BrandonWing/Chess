@@ -4,7 +4,6 @@ window.onload = function() {
     for (let piece of pieces) {
         setPieceFunctionality(piece);
     }
-
 }
 
 //Set the onclick method of the specified piece to the showmoves() function
@@ -63,7 +62,6 @@ function generalMove(maximumMovementsHash, piecePosition) {
                 break;
             }
             possibleCells.push(cellID);
-
         }
         console.log(possibleCells);
     }
@@ -82,6 +80,7 @@ function showMoves(pieceType, piecePosition, pieceColor) {
     console.log("Starting to show");
     unsetCells();
     if(piecePosition == activePiece){
+        activePiece = "";
         return;
     }
     let xPos = xAxis.indexOf(piecePosition.charAt(0));
@@ -180,6 +179,7 @@ function setCell(cellID, originalPiecePosition, cellColor) {
     }
     cell.classList.add(cellColor);
     activeCells.push([cellID, originalCellColor]);
+    activePiece = originalPiecePosition;
     console.log(activeCells);
 }
 
