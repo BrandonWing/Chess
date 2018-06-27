@@ -19,6 +19,7 @@ let xAxis = ["A", "B", "C", "D", "E", "F", "G", "H"];
 let activeCells = [];
 let activePiece = "";
 let kingInCheck = false;
+let selfCheck = false;
 
 //Framework of movement for all pieces excluding the knight
 function generalMove(maximumMovementsHash, piecePosition, pawn = false, checkcheck) {
@@ -222,7 +223,12 @@ function movePiece(newCellID, originalPiecePosition) {
     originalPiece = originalCell.children[0].cloneNode(true);
     console.log(originalPiece);
     originalCell.innerHTML = "";
-
+    let tempColor = (function(){(color == "white") ? "black" : "white";})(); 
+    checkcheck(tempColor); //check to make sure user did not put own piece into check
+    if(selfCheck){
+        originalCell.append(originalPiece);
+        return;
+    }
     newCell = document.getElementById(newCellID);
     newCell.innerHTML = "";
     newCell.append(originalPiece);
@@ -261,6 +267,10 @@ function checkCellPieceColor(pieceToCheck, activePiece, pawn, checkcheck) {
     if((piece.classList.contains("white") && color == "black" && pawn == false) || (piece.classList.contains("black") && color =="white" && pawn == false)){
         if(checkcheck){
             let tempColor = (function(){(color == "white") ? "black" : "white";})(); 
+            if(piece.classList.contains(color, "king")){ //User put his own king in check
+                selfCheck = true;
+
+            }
             if (piece.classList.contains(tempColor, "king")){
                 kingInCheck = true;
             }
