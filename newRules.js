@@ -18,9 +18,10 @@ let color = "white";
 let xAxis = ["A", "B", "C", "D", "E", "F", "G", "H"];
 let activeCells = [];
 let activePiece = "";
+let kingInCheck = false;
 
 //Framework of movement for all pieces excluding the knight
-function generalMove(maximumMovementsHash, piecePosition) {
+function generalMove(maximumMovementsHash, piecePosition, pawn = false, checkcheck) {
     let xPos = xAxis.indexOf(piecePosition.charAt(0));
     let yPos = parseInt(piecePosition.charAt(1));
     let possibleCells = [];
@@ -42,7 +43,33 @@ function generalMove(maximumMovementsHash, piecePosition) {
         adjustXandY(-1, -1, Math.min(maximumMovementsHash.maxDown, maximumMovementsHash.maxLeft)); //Diagnol Down Left
         adjustXandY(-1, 1, Math.min(maximumMovementsHash.maxUp, maximumMovementsHash.maxLeft)); //Diagnol Up Left
     }
+
+    console.log(possibleCells);
+    for(cellID of possibleCells) {
+        setCell(cellID, piecePosition, "bg-success");
+    }  
+    console.log("moving to pawn specific");
     
+    //Special clause for pawn diagnol attack
+    if(pawn == true){
+        let right = xPos + 1;
+        let left = xPos - 1;
+        let diagnolLeftCell, diagnolRightCell;
+        if (color == "white"){
+            diagnolLeftCell = xAxis[left] + (yPos + 1);
+            diagnolRightCell = xAxis[right] + (yPos + 1);
+        }
+        else
+        {
+            diagnolLeftCell = xAxis[left] + (yPos - 1);
+            diagnolRightCell = xAxis[right] + (yPos - 1);
+        }
+        try{console.log("trying");(checkForEnemyPiece(diagnolLeftCell, piecePosition, false, checkcheck)) ? possibleCells.push(diagnolLeftCell) : null;}
+        catch{}
+        try{console.log("trying right");(checkForEnemyPiece(diagnolRightCell, piecePosition, false, checkcheck)) ? possibleCells.push(diagnolRightCell) : null;}
+        catch{}
+    }
+
     //Dynamically add cells to possible places to move
     function adjustXandY(amountForX, amountForY, maxMovement) {
         console.log(amountForX);
@@ -50,36 +77,39 @@ function generalMove(maximumMovementsHash, piecePosition) {
         console.log(maxMovement);
         xPosition = xPos;
         yPosition = yPos;
+
         for(let i = 0; i < maxMovement; i++){
             xPosition = xPosition + amountForX;
             yPosition = yPosition + amountForY;
             xLetter = xAxis[xPosition];
             let cellID = xLetter + yPosition;
             console.log(cellID);
-            let cellClasses = document.getElementById(cellID).classList;
-            if(cellClasses.contains("whiteOccupied") || cellClasses.contains("blackOccupied")){
-                checkCellPieceColor(cellID, piecePosition, color);
+            if(checkForEnemyPiece(cellID, piecePosition, pawn, checkcheck)){
                 break;
             }
-            possibleCells.push(cellID);
+            (checkcheck == false) ? possibleCells.push(cellID) : null;
         }
         console.log(possibleCells);
     }
-    console.log(possibleCells);
-    for(cellID of possibleCells) {
-        setCell(cellID, piecePosition, "bg-success");
-    }  
-    console.log()
+
+    function checkForEnemyPiece(cellToCheck, piecePosition, pawn, checkcheck) {
+        let cellClasses = document.getElementById(cellToCheck).classList;
+        if(cellClasses.contains("whiteOccupied") || cellClasses.contains("blackOccupied")){
+            checkCellPieceColor(cellToCheck, piecePosition, pawn, checkcheck);
+            return true;
+        }
+    }
+    
 }
 
 //Define the different movement patterns for each piece and use the appropriate one 
-function showMoves(pieceType, piecePosition, pieceColor) {
-    if(pieceColor !== color){
+function showMoves(pieceType, piecePosition, pieceColor, checkcheck = false) {
+    if(pieceColor !== color && checkcheck == false){
         return;  //Exit the function if the piece clicked is not the correct color of the turn
     }
     console.log("Starting to show");
     unsetCells();
-    if(piecePosition == activePiece){
+    if(piecePosition == activePiece && checkcheck == false){
         activePiece = "";
         return;
     }
@@ -123,11 +153,11 @@ function showMoves(pieceType, piecePosition, pieceColor) {
     
     console.log(pawnMovements);
     switch (pieceType) {
-        case "rook":generalMove(rookMovements, piecePosition); break;
-        case "bishop":generalMove(bishopMovements, piecePosition); break;
-        case "queen":generalMove(queenMovements, piecePosition);break;
-        case "king":generalMove(kingMovements, piecePosition);break;
-        case "pawn":generalMove(pawnMovements, piecePosition);break;
+        case "rook":generalMove(rookMovements, piecePosition, false, checkcheck); break;
+        case "bishop":generalMove(bishopMovements, piecePosition, false, checkcheck); break;
+        case "queen":generalMove(queenMovements, piecePosition, false, checkcheck);break;
+        case "king":generalMove(kingMovements, piecePosition, false, checkcheck);break;
+        case "pawn":generalMove(pawnMovements, piecePosition, true, checkcheck);break;
         case "knight":knightRules(piecePosition);break;
     }
 
@@ -224,13 +254,26 @@ function unsetCells(){
 }
 
 //Check piece in path to see if player's piece or opponents
-function checkCellPieceColor(pieceToCheck, activePiece) {
+function checkCellPieceColor(pieceToCheck, activePiece, pawn, checkcheck) {
     console.log("checking piece");
     let cell = document.getElementById(pieceToCheck);
     piece = cell.children[0];
-    if((piece.classList.contains("white") && color == "black") || (piece.classList.contains("black") && color =="white")){
+    if((piece.classList.contains("white") && color == "black" && pawn == false) || (piece.classList.contains("black") && color =="white" && pawn == false)){
+        if(checkcheck){
+            let tempColor = (function(){(color == "white") ? "black" : "white";})(); 
+            if (piece.classList.contains(tempColor, "king")){
+                kingInCheck = true;
+            }
+        }
         console.log("setting to red");
         setCell(pieceToCheck, activePiece, "bg-danger");
     }
     console.log(piece);
+}
+
+function checkForCheck(color) {
+    let pieces = document.getElementsByClassName(`"piece ${color}"`);
+    for (piece of pieces){
+        piece.showMoves(piece.classList[0], piece.parentElement.id, piece.classList[2], true);
+    }
 }
