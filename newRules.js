@@ -15,6 +15,7 @@ function setPieceFunctionality(piece) {
 }
 
 let color = "white";
+let enemyColor = "black";
 let xAxis = ["A", "B", "C", "D", "E", "F", "G", "H"];
 let activeCells = [];
 let activePiece = "";
@@ -22,7 +23,7 @@ let kingInCheck = false;
 let selfCheck = false;
 
 //Framework of movement for all pieces excluding the knight
-function generalMove(maximumMovementsHash, piecePosition, pawn = false, checkcheck) {
+function generalMove(maximumMovementsHash, piecePosition, pieceColor, pawn = false, checkcheck = false) {
     let xPos = xAxis.indexOf(piecePosition.charAt(0));
     let yPos = parseInt(piecePosition.charAt(1));
     let possibleCells = [];
@@ -52,7 +53,7 @@ function generalMove(maximumMovementsHash, piecePosition, pawn = false, checkche
         let right = xPos + 1;
         let left = xPos - 1;
         let diagnolLeftCell, diagnolRightCell;
-        if (color == "white"){
+        if (pieceColor == "white"){
             diagnolLeftCell = xAxis[left] + (yPos + 1);
             diagnolRightCell = xAxis[right] + (yPos + 1);
         }
@@ -98,6 +99,7 @@ function generalMove(maximumMovementsHash, piecePosition, pawn = false, checkche
 
 //Define the different movement patterns for each piece and use the appropriate one 
 function showMoves(pieceType, piecePosition, pieceColor, checkcheck = false) {
+    console.log(pieceType, piecePosition, pieceColor, checkcheck);
     if(pieceColor !== color && checkcheck == false){
         return;  //Exit the function if the piece clicked is not the correct color of the turn
     }
@@ -129,7 +131,8 @@ function showMoves(pieceType, piecePosition, pieceColor, checkcheck = false) {
     
     //Pawn movements------------------------
     let pawnMovements;
-    if (color == "white"){
+    if (pieceColor == "white"){
+        console.log("Pawn is " + pieceColor);
         let movement = (function() {switch(yPos) {
             case 2: return 2;break;
             default: return 1;break;
@@ -137,6 +140,7 @@ function showMoves(pieceType, piecePosition, pieceColor, checkcheck = false) {
         pawnMovements = {maxUp:movement, maxRight:0, maxDown:0, maxLeft:0, diagnol:false, vertHor:true}
     }
     else {
+        console.log("Pawn is " + pieceColor);
         let movement = (function() {switch(yPos) {
             case 7: return 2; break;
             default: return 1; break;
@@ -207,13 +211,11 @@ function movePiece(newCellID, originalPiecePosition) {
     originalCell = document.getElementById(originalPiecePosition);
     originalPiece = originalCell.children[0].cloneNode(true);
     console.log(originalPiece);
-    
-    let tempColor = (function() {if(color == "white"){return "black";}
-                                else{return "white";}})();
-    console.log(tempColor);
+    console.log(enemyColor);
     console.log("checking for check"); 
-    checkForCheck(tempColor); //check to make sure user did not put own piece into check
-    if(selfCheck){
+    checkForCheck(enemyColor); //check to make sure user did not put own piece into check
+    
+    if(selfCheck == true){
         selfCheck = false;
         console.log("Illegal Move");
         return;
@@ -230,10 +232,12 @@ function movePiece(newCellID, originalPiecePosition) {
     if(color == "white") {
         newCell.classList.add("whiteOccupied");
         color = "black";
+        enemyColor = "white";
     }
     else{
         newCell.classList.add("blackOccupied");
         color = "white";
+        enemyColor = "black"
     }
     unsetCells();
     checkForCheck(color);
@@ -258,19 +262,22 @@ function checkCellPieceColor(pieceToCheck, activePiece, pawn, checkcheck) {
     if((piece.classList.contains("white") && color == "black" && pawn == false) || (piece.classList.contains("black") && color =="white" && pawn == false)){
         if(checkcheck){
             console.log("inside checkcellpiececolor checkcheck")
-            let tempColor = (function() {if(color == "white"){return "black";}
-                                else{return "white";}})(); 
             console.log(piece);
+            console.log(piece.classList);
             console.log(color);
-            console.log(tempColor);
-            if(piece.classList.contains("king piece" + " " + color)){ //User put his own king in check
-                selfCheck = true;
+            console.log(piece.classList.contains("king"));
+            console.log(piece.classList.contains(color.valueOf()));
+            console.log(piece.classList.contains(enemyColor.valueOf()));
+            console.log(selfCheck);
+            if(piece.classList.contains("king") && piece.classList.contains(color)){ //User put his own king in check
+                kingInCheck = true;
                 console.log("worked");
 
             }
-            if (piece.classList.contains("king piece" + " " + tempColor)){
-                kingInCheck = true;
+            if (piece.classList.contains("king") && piece.classList.contains(enemyColor)){
                 console.log("worked");
+                selfCheck = true;
+                
             }
             return;
         }
@@ -286,8 +293,8 @@ function checkForCheck(checkcolor) {
     for (let piece of pieces){
         console.log("checking");
         console.log(piece.classList[0], piece.parentElement.id, piece.classList[2], true);
-        //console.log(piece);
-        //console.log(`Checking ${piece.classList[0]}`);
-        showMoves(piece.classList[0], piece.parentElement.id, piece.classList[2], true);
+
+        (piece.classList[0] !== "knight") ? 
+        showMoves(piece.classList[0], piece.parentElement.id, enemyColor, true) : null;
     }
 }
