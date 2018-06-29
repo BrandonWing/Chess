@@ -143,11 +143,11 @@ function generalMove(maximumMovementsHash, piecePosition, pieceColor, pieceType,
             case false:
                  diagnolRightCell = xAxis[right] + (yPos - 1);
                  diagnolLeftCell = xAxis[left] + (yPos - 1); break;}
-        try{if(checkForEnemyPiece(diagnolLeftCell, piecePosition, true, checkForCheck)){
+        try{if(checkForEnemyPiece(diagnolLeftCell, piecePosition, pieceColor, true, checkForCheck)){
             (checkForCheck == false) ? possibleCells.push(diagnolLeftCell) : null;}
         }
         catch{}
-        try{if(checkForEnemyPiece(diagnolRightCell, piecePosition, true, checkForCheck)){
+        try{if(checkForEnemyPiece(diagnolRightCell, piecePosition, pieceColor, true, checkForCheck)){
             (checkForCheck == false) ? possibleCells.push(diagnolRightCell) : null;} 
         }
         catch{}
