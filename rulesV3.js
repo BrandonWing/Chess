@@ -30,7 +30,7 @@ let selfCheck = false;
 //@param pieceType The type of the selected piece. Used to check specifically if the piece is a pawn
 //@param checkingForCheck Switches certain parts of the function to not look for possible cells but rather if the king is in check 
 function showMoves(pieceType, piecePosition, pieceColor, checkForCheck) {
-    if(pieceColor !== currentColor && checkForCheck == false){return;}                           //If player clicks piece that isn't theirs, do nothing
+    if(pieceColor !== currentColor && checkForCheck == false){return;}                    //If player clicks piece that isn't theirs, do nothing
     unsetCells();                                                                         //Unset movement possibilities from any cells
     if(piecePosition == activePiece && checkForCheck == false){activePiece = ""; return;} //Exit function if player clicks same piece twice
 
@@ -134,24 +134,20 @@ function generalMove(maximumMovementsHash, piecePosition, pieceColor, pieceType,
 
     //Script to determine if the pawn is in attacking range
     if(pieceType == "pawn"){
-        let right = xPos + 1;
-        let left = xPos - 1;
-        switch(pieceColor == "white")
-            {case true:
-                 diagnolRightCell = xAxis[right] + (yPos + 1);
-                 diagnolLeftCell = xAxis[left] + (yPos + 1); break;
+        let originalPossibleMovesLength = possibleCells.length;
+        switch(pieceColor == "white"){
+            case true:
+                try{checkPossibleCells(1, 1, 1, true, checkForCheck)}catch{}
+                try{checkPossibleCells(-1, 1, 1, true, checkForCheck)}catch{}
             case false:
-                 diagnolRightCell = xAxis[right] + (yPos - 1);
-                 diagnolLeftCell = xAxis[left] + (yPos - 1); break;}
-        try{if(checkForEnemyPiece(diagnolLeftCell, piecePosition, pieceColor, true, checkForCheck)){
-            (checkForCheck == false) ? possibleCells.push(diagnolLeftCell) : null;}
-        }
-        catch{}
-        try{if(checkForEnemyPiece(diagnolRightCell, piecePosition, pieceColor, true, checkForCheck)){
-            (checkForCheck == false) ? possibleCells.push(diagnolRightCell) : null;} 
-        }
-        catch{}
+                try{checkPossibleCells(1, -1, 1, true, checkForCheck)}catch{}
+                try{checkPossibleCells(-1, -1, 1, true, checkForCheck)}catch{}
+            }
+        let newPossibleMoveLength = possibleCells.length;
+        for(let i = 0; i < (newPossibleMoveLength - originalPossibleMovesLength); i++)
+            {possibleCells.pop();}
     }
+        
 
     if (checkForCheck == false){
         for(cellID of possibleCells) {
